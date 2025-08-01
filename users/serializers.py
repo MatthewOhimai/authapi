@@ -10,7 +10,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ['phone_number', 'role', 'date_of_birth']
 
     "Validating phoe number according to nigeria phone number e.g 08166778899"
-    def validate_phone_number(self, value):
+    def validate_phone_number(self, value):  # Regex validation
         if not re.match(r'^0\d{10}$', value):
             raise serializers.ValidationError("Input a correct phone number.")
         return value
@@ -42,5 +42,6 @@ class UserSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         rep['profile'] = ProfileSerializer(instance.profile).data
+        rep['is_verified'] = instance.is_verified  # is_verified
         return rep
     

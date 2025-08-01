@@ -29,6 +29,7 @@ class User(AbstractBaseUser, PermissionsMixin): # Usage of (AbstractBaseUser) fo
     username = models.CharField(max_length=75)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)  # Bonus Task
     date_joined = models.DateTimeField(default=timezone.now)
 
     "Use the email field instead of the username(default) as the login"
