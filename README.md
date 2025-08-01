@@ -12,7 +12,7 @@
 ### ✅ 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/AUTHAPI.git
+git clone https://github.com/yourusername/authapi.git
 cd authapi
 ```
 
