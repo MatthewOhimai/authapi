@@ -1,46 +1,45 @@
-from rest_framework.views import APIView  # Imported apiview from drf
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status, permissions
-from .serializers import UserSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import authenticate
-# Create your views here.
 
-class RegisterView(APIView):  # Registering new user
-    def post(self, request):  # Post requests
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():  # make sure the provided data is valid
-            user = serializer.save()
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'user': serializer.data,
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+from .serializers import UserRegisterSerializer, UserSerializer
 
-class LoginView(APIView):  # For Logining user
-    def post(self, request): # post request
-        "get the email and password from the requested data"
-        email = request.data.get('email')
-        password = request.data.get('password')
-        user = authenticate(request, email=email, password=password)
-        "checking if user is valid"
-        if user:
-            "Generates JWT tokens and serializes the user"
-            refresh = RefreshToken.for_user(user)
-            serializer = UserSerializer(user)
-            "returns the jwt token in response"
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            })
-        return Response({'error': 'Invalid credentials'}, status=400) # Gives error message upon failed authentication
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    serializer = UserRegisterSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'user': UserSerializer(user).data,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh)
+        }, status=201)
+    return Response(serializer.errors, status=400)
 
-class MeView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):  # GET request
-        serializer = UserSerializer(request.user)  # Serializes the authenticated or logged-in user
-        return Response(serializer.data)  # returns serialized data 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_view(request):
+    email = request.data.get('email')
+    password = request.data.get('password')
+    user = authenticate(request, email=email, password=password)
     
+    if user:
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user).data
+        }, status=200)
+    return Response({'detail': 'Invalid credentials'}, status=401)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def me_view(request):
+    user = request.user
+    serializer = UserSerializer(user)
+    return Response(serializer.data)
